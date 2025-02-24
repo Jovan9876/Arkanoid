@@ -35,33 +35,49 @@ public:
     
     void EndContact(b2Contact* contact) {};
     
+  
     void PreSolve(b2Contact* contact, const b2Manifold* oldManifold)
     {
-        
         b2WorldManifold worldManifold;
         contact->GetWorldManifold(&worldManifold);
         b2PointState state1[2], state2[2];
         b2GetPointStates(state1, state2, oldManifold, contact->GetManifold());
-        
+
         if (state2[0] == b2_addState)
         {
-            
-            // Use contact->GetFixtureA()->GetBody() to get the body that was hit
+            // Get the bodies involved in the collision
             b2Body* bodyA = contact->GetFixtureA()->GetBody();
+            b2Body* bodyB = contact->GetFixtureB()->GetBody();
+
+            struct PhysicsObject *objDataA = (struct PhysicsObject *)(bodyA->GetUserData());
+            struct PhysicsObject *objDataB = (struct PhysicsObject *)(bodyB->GetUserData());
+
+            CBox2D *parentObj = (__bridge CBox2D *)(objDataA->box2DObj);
+
             
-            // Get the PhysicsObject as the user data, and then the CBox2D object in that struct
-            // This is needed because this handler may be running in a different thread and this
-            //  class does not know about the CBox2D that's running the physics
-            struct PhysicsObject *objData = (struct PhysicsObject *)(bodyA->GetUserData());
-            CBox2D *parentObj = (__bridge CBox2D *)(objData->box2DObj);
-            
-            // Call RegisterHit (assume CBox2D object is in user data)
-            [parentObj RegisterHit];    // assumes RegisterHit is a callback function to register collision
+            // Retrieve the physics objects map from CBox2D
+            std::map<std::string, PhysicsObject *> *physicsMap =
+                (std::map<std::string, PhysicsObject *> *)[parentObj GetPhysicsObjects];
+
+            for (auto &pair : *physicsMap) {
+                if (pair.second == objDataA) {
+                    if (pair.first.find("Brick") != std::string::npos) {
+                        [parentObj RegisterHit:pair.first.c_str()];  // Convert std::string to const char *
+                        return;
+                    }
+                } else if (pair.second == objDataB) {
+                    if (pair.first.find("Brick") != std::string::npos) {
+                        [parentObj RegisterHit:pair.first.c_str()];  // Convert std::string to const char *
+                        return;
+                    }
+                }
+            }
+
             
         }
-        
     }
-    
+
+
     void PostSolve(b2Contact* contact, const b2ContactImpulse* impulse) {};
     
 };
@@ -81,6 +97,10 @@ public:
     // Map to keep track of physics object to communicate with the renderer
     std::map<std::string, struct PhysicsObject *> physicsObjects;
 
+    std::string lastHitBrick; // Store the last hit brick
+    std::vector<std::string> bricksToDestroy;  // Stores bricks to delete after Step()
+
+    
 #ifdef USE_HELLO_WORLD
     b2BodyDef *groundBodyDef;
     b2Body *groundBody;
@@ -96,9 +116,11 @@ public:
 
 @implementation CBox2D
 
+
 - (instancetype)init
 {
-    
+
+
     self = [super init];
     
     if (self) {
@@ -116,19 +138,37 @@ public:
         contactListener = new CContactListener();
         world->SetContactListener(contactListener);
         
-        // Set up the brick and ball objects for Box2D
-        struct PhysicsObject *newObj = new struct PhysicsObject;
-        newObj->loc.x = BRICK_POS_X;
-        newObj->loc.y = BRICK_POS_Y;
-        newObj->objType = ObjTypeBox;
-        char *objName = strdup("Brick");
-        [self AddObject:objName newObject:newObj];
+//        // Set up the brick and ball objects for Box2D
+//        newObj->loc.x = BRICK_POS_X;
+//        newObj->loc.y = BRICK_POS_Y;
+//        newObj->objType = ObjTypeBox;
+//        char *objName = strdup("Brick");
+//        [self AddObject:objName newObject:newObj];
+  
         
+        // Add multiple bricks in a grid
+        for (int row = 0; row < BRICK_ROWS; row++) {
+            for (int col = 0; col < BRICK_COLUMNS; col++) {
+                
+                struct PhysicsObject *newObj = new struct PhysicsObject;
+                newObj->loc.x = BRICK_POS_X + col * (BRICK_WIDTH + BRICK_SPACING);
+                newObj->loc.y = BRICK_POS_Y + row * (BRICK_HEIGHT + BRICK_SPACING);
+                newObj->objType = ObjTypeBox;
+                
+                char objName[20];
+                snprintf(objName, sizeof(objName), "Brick_%d_%d", row, col); // Unique brick name
+
+                [self AddObject:objName newObject:newObj];
+            }
+        }
+
+        struct PhysicsObject *newObj = new struct PhysicsObject;
+
         newObj = new struct PhysicsObject;
         newObj->loc.x = BALL_POS_X;
         newObj->loc.y = BALL_POS_Y;
         newObj->objType = ObjTypeCircle;
-        objName = strdup("Ball");
+        char *objName  = strdup("Ball");
         [self AddObject:objName newObject:newObj];
         
         totalElapsedTime = 0;
@@ -199,17 +239,38 @@ public:
     {
         
         // Stop the ball and make sure it is not affected by forces
-        ((b2Body *)theBall->b2ShapePtr)->SetLinearVelocity(b2Vec2(0, 0));
-        ((b2Body *)theBall->b2ShapePtr)->SetAngularVelocity(0);
-        ((b2Body *)theBall->b2ShapePtr)->SetAwake(false);
-        ((b2Body *)theBall->b2ShapePtr)->SetActive(false);
+//        ((b2Body *)theBall->b2ShapePtr)->SetLinearVelocity(b2Vec2(0, 0));
+//        ((b2Body *)theBall->b2ShapePtr)->SetAngularVelocity(0);
+//        ((b2Body *)theBall->b2ShapePtr)->SetAwake(false);
+//        ((b2Body *)theBall->b2ShapePtr)->SetActive(false);
         
-        // Destroy the brick from Box2D and related objects in this class
-        world->DestroyBody(((b2Body *)theBrick->b2ShapePtr));
-        delete theBrick;
-        theBrick = nullptr;
-        physicsObjects.erase("Brick");
-        ballHitBrick = false;   // until a reset and re-launch
+        // Ensure theBall is valid before accessing it
+        if (theBall && theBall->b2ShapePtr) {
+            ((b2Body *)theBall->b2ShapePtr)->SetLinearVelocity(b2Vec2(0, 0));
+            ((b2Body *)theBall->b2ShapePtr)->SetAngularVelocity(0);
+            ((b2Body *)theBall->b2ShapePtr)->SetAwake(false);
+            ((b2Body *)theBall->b2ShapePtr)->SetActive(false);
+        }
+
+        
+//
+//        // Destroy the brick from Box2D and related objects in this class
+//        world->DestroyBody(((b2Body *)theBrick->b2ShapePtr));
+//        delete theBrick;
+//        theBrick = nullptr;
+//        physicsObjects.erase("Brick");
+//        ballHitBrick = false;   // until a reset and re-launch
+  
+        // Find which brick was hit and remove only that one
+        for (auto it = physicsObjects.begin(); it != physicsObjects.end(); ++it) {
+            if (it->second && it->second->b2ShapePtr) {
+                world->DestroyBody(((b2Body *)it->second->b2ShapePtr));
+                delete it->second;
+                physicsObjects.erase(it);
+                break; // Remove only the first brick hit
+            }
+        }
+
         
     }
     
@@ -229,6 +290,18 @@ public:
         
     }
     
+    // Destroy bricks that were hit AFTER Step() to avoid Box2D errors
+    for (const std::string &brickName : bricksToDestroy) {
+        auto it = physicsObjects.find(brickName);
+        if (it != physicsObjects.end()) {
+            world->DestroyBody((b2Body *)it->second->b2ShapePtr);
+            delete it->second;
+            physicsObjects.erase(it);
+        }
+    }
+    bricksToDestroy.clear();  // Clear the pending list
+
+    
     // Update each node based on the new position from Box2D
     for (auto const &b:physicsObjects) {
         if (b.second && b.second->b2ShapePtr) {
@@ -239,11 +312,30 @@ public:
     
 }
 
--(void)RegisterHit
-{
-    // Set some flag here for processing later...
-    ballHitBrick = true;
+//-(void)RegisterHit
+//{
+//    for (auto it = physicsObjects.begin(); it != physicsObjects.end(); ++it) {
+//        if (it->second && it->second->b2ShapePtr) {
+//            std::string hitBrickName = it->first;
+//            if (hitBrickName.find("Brick") != std::string::npos) { // Ensure it's a brick
+//                lastHitBrick = hitBrickName;  // Store the hit brick's name
+//                bricksToDestroy.push_back(hitBrickName); // Mark for removal later
+//                break;
+//            }
+//        }
+//    }
+//}
+
+- (void)RegisterHit:(const char *)brickName {
+    std::string brick = brickName; // Use directly in C++
+    bricksToDestroy.push_back(brick);
 }
+
+
+
+
+
+
 
 -(void)LaunchBall
 {
@@ -257,7 +349,25 @@ public:
     // Set up the body definition and create the body from it
     b2BodyDef bodyDef;
     b2Body *theObject;
-    bodyDef.type = b2_dynamicBody;
+    
+    
+
+    bodyDef.position.Set(newObj->loc.x, newObj->loc.y);
+    theObject = world->CreateBody(&bodyDef);
+    if (!theObject) return;
+        
+    // Make the brick static
+    if (strncmp(name, "Brick", 5) == 0) {  // Check if it's any brick
+        bodyDef.type = b2_staticBody; // Set all bricks as static
+    } else {
+        bodyDef.type = b2_dynamicBody;
+    }
+
+
+    bodyDef.position.Set(newObj->loc.x, newObj->loc.y);
+    theObject = world->CreateBody(&bodyDef);
+    
+    
     bodyDef.position.Set(newObj->loc.x, newObj->loc.y);
     theObject = world->CreateBody(&bodyDef);
     if (!theObject) return;
@@ -315,6 +425,7 @@ public:
     return physicsObjects[name];
 }
 
+
 -(void)Reset
 {
     
@@ -351,12 +462,14 @@ public:
     
 }
 
+- (void *)GetPhysicsObjects {
+    return (void *)&physicsObjects;
+}
 
 
-
-
-
-
+//-(const char *)GetLastHitBrick {
+//    return lastHitBrick.c_str(); // Convert std::string to C string
+//}
 
 
 -(void)HelloWorld

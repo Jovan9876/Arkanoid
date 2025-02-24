@@ -20,23 +20,17 @@ struct ContentView: View {
                     VStack {
                         SceneView(scene: scene, pointOfView: scene.cameraNode)
                             .ignoresSafeArea()
-                            .gesture(
-                                DragGesture()
-                                    .onChanged { value in
-                                        let deltaX = Float(value.translation.width * 0.005)
-                                        scene.movePaddle(to: deltaX)
-                                    }
-                            )
+
                             .onTapGesture(count: 2) {
                                 scene.handleDoubleTap()
                             }
-//                        Button(action: {
-//                            scene.resetPhysics()
-//                        }, label: {
-//                            Text("Reset")
-//                                .font(.system(size: 24))
-//                                .padding(.bottom, 50)
-//                        })
+                        Button(action: {
+                            scene.resetPhysics()
+                        }, label: {
+                            Text("Reset")
+                                .font(.system(size: 24))
+                                .padding(.bottom, 50)
+                        })
                     }
                     .background(.black)
                 } label: { Text("Arkanoid: Box2D") }

@@ -18,10 +18,6 @@ class Box2DDemo: SCNScene {
     var lastTime = CFTimeInterval(floatLiteral: 0)  // Used to calculate elapsed time on each update
     
     private var box2D: CBox2D!                      // Points to Objective-C++ wrapper for C++ Box2D library
-    private var paddleNode: SCNNode?
-    private var ballNode: SCNNode?
-    private var lives = 3
-    private var ballAttachedToPaddle = true  // Track if the ball is attached to the paddle
     
     // Catch if initializer in init() fails
     required init?(coder aDecoder: NSCoder) {
@@ -37,14 +33,13 @@ class Box2DDemo: SCNScene {
         
         setupCamera()
         
-        // Add the ball, paddle, walls and the brick
-        addWalls()
-        addPaddle()
+        // Add the ball and the brick
         addBall()
         addBricks()
         
         // Initialize the Box2D object
         box2D = CBox2D()
+        //        box2D.helloWorld()  // If you want to test the HelloWorld example of Box2D
         
         // Setup the game loop tied to the display refresh
         let updater = CADisplayLink(target: self, selector: #selector(gameLoop))
@@ -66,43 +61,15 @@ class Box2DDemo: SCNScene {
         
     }
     
-    func addWalls() {
-        let wallThickness: CGFloat = 1.0
-        let playAreaWidth: CGFloat = 40.0
-        let playAreaHeight: CGFloat = 160.0
-
-        // Left Wall
-        let leftWall = SCNNode(geometry: SCNBox(width: wallThickness, height: playAreaHeight, length: 1, chamferRadius: 0))
-        leftWall.position = SCNVector3(-playAreaWidth / 2 - wallThickness / 2, 0, 0) // Adjusted position
-        leftWall.physicsBody = SCNPhysicsBody.static()
-        rootNode.addChildNode(leftWall)
-
-        // Right Wall
-        let rightWall = SCNNode(geometry: SCNBox(width: wallThickness, height: playAreaHeight, length: 1, chamferRadius: 0))
-        rightWall.position = SCNVector3(playAreaWidth / 2 + wallThickness / 2, 0, 0) // Adjusted position
-        rightWall.physicsBody = SCNPhysicsBody.static()
-        rootNode.addChildNode(rightWall)
-
-        // Top Wall
-        let topWall = SCNNode(geometry: SCNBox(width: playAreaWidth, height: wallThickness, length: 1, chamferRadius: 0))
-        topWall.position = SCNVector3(0, playAreaHeight / 2 + wallThickness / 2, 0) // Adjusted position
-        topWall.physicsBody = SCNPhysicsBody.static()
-        rootNode.addChildNode(topWall)
-    }
-
-    
-    func addPaddle() {
-        
-        let paddle = SCNNode(geometry: SCNBox(width: 15, height: 3, length: 1, chamferRadius: 0))
-        paddle.name = "Paddle"
-        paddle.geometry?.firstMaterial?.diffuse.contents = UIColor.blue
-        paddle.position = SCNVector3(Int(BALL_POS_X), Int(BALL_POS_Y-5), 0)
-        rootNode.addChildNode(paddle)
-        paddleNode = paddle
-
-    }
     
     func addBricks() {
+        
+//        let theBrick = SCNNode(geometry: SCNBox(width: CGFloat(BRICK_WIDTH), height: CGFloat(BRICK_HEIGHT), length: 1, chamferRadius: 0))
+//        theBrick.name = "Brick"
+//        theBrick.geometry?.firstMaterial?.diffuse.contents = UIColor.red
+//        theBrick.position = SCNVector3(Int(BRICK_POS_X), Int(BRICK_POS_Y), 0)
+//        rootNode.addChildNode(theBrick)
+        
         
         let brickWidth: CGFloat = CGFloat(BRICK_WIDTH)  // 20.0f
         let brickHeight: CGFloat = CGFloat(BRICK_HEIGHT)  // 5.0f
@@ -122,10 +89,11 @@ class Box2DDemo: SCNScene {
                 let xPos = startX + CGFloat(col) * (brickWidth + brickSpacing)
                 let yPos = startY + CGFloat(row) * (brickHeight + brickSpacing)
 
-                brick.position = SCNVector3(Float(xPos), Float(yPos), 0)
+                brick.position = SCNVector3(Int(xPos), Int(yPos), 0)
                 rootNode.addChildNode(brick)
             }
         }
+        
         
     }
     
@@ -137,26 +105,9 @@ class Box2DDemo: SCNScene {
         theBall.geometry?.firstMaterial?.diffuse.contents = UIColor.white
         theBall.position = SCNVector3(Int(BALL_POS_X), Int(BALL_POS_Y), 0)
         rootNode.addChildNode(theBall)
-        ballNode = theBall
         
     }
     
-    @MainActor
-    func movePaddle(to deltaX: Float) {
-        guard let paddle = paddleNode else { return }
-
-        // Update paddle position based on its current position
-        
-        let newX = paddle.position.x + deltaX // Move relative to its last position
-        paddle.position.x = newX
-
-        // If the ball is still attached, move it with the paddle
-        if ballAttachedToPaddle, let ball = ballNode {
-            ball.position = SCNVector3(newX, paddle.position.y + 5, 0) // Keep ball above paddle
-        }
-    }
-
-
     
     // Simple game loop that gets called each frame
     @MainActor
@@ -172,11 +123,11 @@ class Box2DDemo: SCNScene {
     }
     
     
-    @MainActor
-    func updateGameObjects(elapsedTime: Double) {
-        
-        // Update Box2D physics simulation
-        box2D.update(Float(elapsedTime))
+//    @MainActor
+//    func updateGameObjects(elapsedTime: Double) {
+//        
+//        // Update Box2D physics simulation
+//        box2D.update(Float(elapsedTime))
 //        
 //        // Get ball position and update ball node
 //        let ballPos = UnsafePointer(box2D.getObject("Ball"))
@@ -201,8 +152,44 @@ class Box2DDemo: SCNScene {
 //            theBrick?.isHidden = true
 //            
 //        }
+//        
+//    }
+  
+    @MainActor
+    func updateGameObjects(elapsedTime: Double) {
         
+        // Update Box2D physics simulation
+        box2D.update(Float(elapsedTime))
+        
+        // Update ball position
+        if let ballPtr = box2D.getObject("Ball") {
+            let ballPos = UnsafePointer(ballPtr)
+            if let theBall = rootNode.childNode(withName: "Ball", recursively: true) {
+                theBall.position.x = ballPos.pointee.loc.x
+                theBall.position.y = ballPos.pointee.loc.y
+            }
+        }
+        
+        // Loop through all bricks and update positions
+        for row in 0..<Int(BRICK_ROWS) {
+            for col in 0..<Int(BRICK_COLUMNS) {
+                let brickName = "Brick_\(row)_\(col)"
+                let brickPos = UnsafePointer(box2D.getObject(brickName))
+
+                if let theBrick = rootNode.childNode(withName: brickName, recursively: true) {
+                    if brickPos != nil {
+                        theBrick.position.x = brickPos!.pointee.loc.x
+                        theBrick.position.y = brickPos!.pointee.loc.y
+                    } else {
+                        theBrick.isHidden = true // Hide the brick when it’s destroyed
+                    }
+                }
+            }
+        }
+
+
     }
+
     
     
     // Function to be called by double-tap gesture: launch the ball
@@ -225,4 +212,5 @@ class Box2DDemo: SCNScene {
     }
     
 }
+
 

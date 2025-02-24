@@ -26,12 +26,14 @@
 #define BRICK_WAIT            1.0f
 #define BALL_POS_X            0
 #define BALL_POS_Y            5
-#define BALL_RADIUS            3.0f
+#define BALL_RADIUS            2.0f
 #define BALL_VELOCITY        1000.0f
 
 
 // You can define other object types here
 typedef enum { ObjTypeBox=0, ObjTypeCircle=1 } ObjectType;
+
+
 
 
 // Location of each object in our physics world
@@ -52,15 +54,31 @@ struct PhysicsObject {
 
 // Wrapper class
 @interface CBox2D : NSObject
+//    std::map<std::string, struct PhysicsObject *> physicsObjects;
+//}
+
+
+
 
 -(void) HelloWorld; // Basic Hello World! example from Box2D
 
 -(void) LaunchBall;                                                         // launch the ball
 -(void) Update:(float)elapsedTime;                                          // update the Box2D engine
--(void) RegisterHit;                                                        // Register when the ball hits the brick
+//-(void) RegisterHit;                                                        // Register when the ball hits the brick
+- (void)RegisterHit:(const char *)brickName;
+
 -(void) AddObject:(char *)name newObject:(struct PhysicsObject *)newObj;    // Add a new physics object
 -(struct PhysicsObject *) GetObject:(const char *)name;                     // Get a physics object by name
 -(void) Reset;                                                              // Reset Box2D
+
+- (void *)GetPhysicsObjects;
+
+
+//-(const char *)GetLastHitBrick;                                             // Get last hit brick
+
+
+
+
 
 @end
 
