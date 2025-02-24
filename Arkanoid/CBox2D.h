@@ -16,10 +16,13 @@
 //   position, width+height (or radius), velocity,
 //   and how long to wait before dropping brick
 
-#define BRICK_POS_X         0
-#define BRICK_POS_Y         90
-#define BRICK_WIDTH         20.0f
-#define BRICK_HEIGHT        5.0f
+#define BRICK_POS_X           -12
+#define BRICK_POS_Y           40
+#define BRICK_WIDTH           20.0f
+#define BRICK_HEIGHT          5.0f
+#define BRICK_ROWS            5
+#define BRICK_COLUMNS         2
+#define BRICK_SPACING         5
 #define BRICK_WAIT            1.0f
 #define BALL_POS_X            0
 #define BALL_POS_Y            5
