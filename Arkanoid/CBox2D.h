@@ -20,8 +20,8 @@
 #define BRICK_POS_Y           40
 #define BRICK_WIDTH           6.0f
 #define BRICK_HEIGHT          3.0f
-#define BRICK_ROWS            7
-#define BRICK_COLUMNS         5
+#define BRICK_ROWS            1
+#define BRICK_COLUMNS         1
 #define BRICK_SPACING         6
 #define BRICK_WAIT            1.0f
 #define BALL_POS_X            0
@@ -56,9 +56,10 @@ struct PhysicsObject {
 // Wrapper class
 @interface CBox2D : NSObject
 
+- (instancetype)init:(float)width screenHeight:(float)height;
 
 
--(void) HelloWorld; // Basic Hello World! example from Box2D
+//-(void) SetScreenSize:(float)width height:(float)height;
 
 -(void) LaunchBall;                                                         // launch the ball
 -(void) Update:(float)elapsedTime;                                          // update the Box2D engine

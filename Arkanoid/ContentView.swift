@@ -16,7 +16,7 @@ struct ContentView: View {
         NavigationStack {
             List {
                 NavigationLink {
-                    let scene = Box2DDemo()
+                    let scene = ArkanoidGame()
                     VStack {
                         SceneView(scene: scene, pointOfView: scene.cameraNode)
                             .ignoresSafeArea()

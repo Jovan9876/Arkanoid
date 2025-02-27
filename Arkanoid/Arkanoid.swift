@@ -9,7 +9,7 @@ import SceneKit
 
 import QuartzCore
 
-class Box2DDemo: SCNScene {
+class ArkanoidGame: SCNScene {
     
     var cameraNode = SCNNode()                      // Initialize camera node
     
@@ -18,11 +18,14 @@ class Box2DDemo: SCNScene {
     private var box2D: CBox2D!                      // Points to Objective-C++ wrapper for C++ Box2D library
     private var lives = 3
     private var score = 0
-
-//    private var livesTextNode = SCNNode()
+    private var totalBricks = 0
+    
     private var livesTextNode: SCNNode? // Reference for lives text
     private var scoreTextNode: SCNNode? // Reference for score text
-
+    
+    // Get screen width and height
+    let screenHeight = UIScreen.main.bounds.height / 8 // Divide by 8 for correct position
+    let screenWidth = UIScreen.main.bounds.width / 14 // Divide by 14 for correct position
     
     // Catch if initializer in init() fails
     required init?(coder aDecoder: NSCoder) {
@@ -43,11 +46,11 @@ class Box2DDemo: SCNScene {
         addBricks()
         addLivesText()
         addScoreText()
-//        addWalls() for testing
+//        addWalls() // for testing
 
         // Initialize the Box2D object
-        box2D = CBox2D()
-        //        box2D.helloWorld()  // If you want to test the HelloWorld example of Box2D
+        box2D = CBox2D(Float(screenWidth), screenHeight: Float(screenHeight))
+
         
         // Setup the game loop tied to the display refresh
         let updater = CADisplayLink(target: self, selector: #selector(gameLoop))
@@ -56,6 +59,34 @@ class Box2DDemo: SCNScene {
 
     }
     
+    
+    func addWalls() {
+        // FOR TESTING
+        let wallThickness: CGFloat = CGFloat(WALL_THICKNESS) // 1.0f
+        let wallLength: CGFloat = CGFloat(WALL_LENGTH)  // Increased height for full coverage
+    
+        let wallMaterial = SCNMaterial()
+        wallMaterial.diffuse.contents = UIColor.white
+            
+        // TOP WALL - Consistent with Box2D
+        let topWall = SCNNode(geometry: SCNBox(width: wallLength, height: wallThickness, length: 1, chamferRadius: 0))
+        topWall.position = SCNVector3(0, screenHeight, 0)
+        topWall.geometry?.materials = [wallMaterial]
+        rootNode.addChildNode(topWall)
+            
+        // LEFT WALL - Consistent with Box2D
+        let leftWall = SCNNode(geometry: SCNBox(width: wallThickness, height: wallLength, length: 1, chamferRadius: 0))
+        leftWall.position = SCNVector3(-screenWidth, 0, 0)
+        leftWall.geometry?.materials = [wallMaterial]
+        rootNode.addChildNode(leftWall)
+  
+        // RIGHT WALL - Consistent with Box2D
+        let rightWall = SCNNode(geometry: SCNBox(width: wallThickness, height: wallLength, length: 1, chamferRadius: 0))
+        rightWall.position = SCNVector3(screenWidth, 0, 0)
+        rightWall.geometry?.materials = [wallMaterial]
+        rootNode.addChildNode(rightWall)
+    
+    }
     
     // Function to setup the camera node
     func setupCamera() {
@@ -129,6 +160,7 @@ class Box2DDemo: SCNScene {
         
         for row in 0..<Int(BRICK_ROWS) {  // 5 rows
             for col in 0..<Int(BRICK_COLUMNS) {  // 2 columns
+                totalBricks += 1
                 let brick = SCNNode(geometry: SCNBox(width: brickWidth, height: brickHeight, length: 1, chamferRadius: 0))
                 brick.name = "Brick_\(row)_\(col)"
                 brick.geometry?.firstMaterial?.diffuse.contents = colors.randomElement()
@@ -197,7 +229,7 @@ class Box2DDemo: SCNScene {
                 }
             }
         }
-        
+                
         // Loop through all bricks and update positions
         for row in 0..<Int(BRICK_ROWS) {
             for col in 0..<Int(BRICK_COLUMNS) {
@@ -213,11 +245,16 @@ class Box2DDemo: SCNScene {
                         theBrick.isHidden = true
                         score += 1
                         updateScoreText()
+                    } else if score == totalBricks {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                            self.resetGame() // Reset game u win // flashes bricks aswell
+                        }
+
                     }
                 }
             }
         }
-
+        
     }
 
     
@@ -248,11 +285,11 @@ class Box2DDemo: SCNScene {
                 $0.removeFromParentNode()
             }
         }
-
-        box2D = CBox2D()
+        
+        box2D = CBox2D(Float(screenWidth), screenHeight: Float(screenHeight))
         lives = 3
         score = 0
-
+        totalBricks = 0
         
         addBricks()
         addBall()
