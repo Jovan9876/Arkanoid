@@ -35,7 +35,6 @@ public:
     
     void EndContact(b2Contact* contact) {};
     
-  
     void PreSolve(b2Contact* contact, const b2Manifold* oldManifold)
     {
         b2WorldManifold worldManifold;
@@ -49,12 +48,17 @@ public:
             b2Body* bodyA = contact->GetFixtureA()->GetBody();
             b2Body* bodyB = contact->GetFixtureB()->GetBody();
 
+            // Retrieve PhysicsObject structs from user data
             struct PhysicsObject *objDataA = (struct PhysicsObject *)(bodyA->GetUserData());
             struct PhysicsObject *objDataB = (struct PhysicsObject *)(bodyB->GetUserData());
 
+            // Ensure objDataA is not NULL before accessing box2DObj
+            if (!objDataA || !objDataA->box2DObj) return;
+            if (!objDataB || !objDataB->box2DObj) return;
+
+            // Perform safe type conversion
             CBox2D *parentObj = (__bridge CBox2D *)(objDataA->box2DObj);
 
-            
             // Retrieve the physics objects map from CBox2D
             std::map<std::string, PhysicsObject *> *physicsMap =
                 (std::map<std::string, PhysicsObject *> *)[parentObj GetPhysicsObjects];
@@ -62,20 +66,19 @@ public:
             for (auto &pair : *physicsMap) {
                 if (pair.second == objDataA) {
                     if (pair.first.find("Brick") != std::string::npos) {
-                        [parentObj RegisterHit:pair.first.c_str()];  // Convert std::string to const char *
+                        [parentObj RegisterHit:pair.first.c_str()];
                         return;
                     }
                 } else if (pair.second == objDataB) {
                     if (pair.first.find("Brick") != std::string::npos) {
-                        [parentObj RegisterHit:pair.first.c_str()];  // Convert std::string to const char *
+                        [parentObj RegisterHit:pair.first.c_str()];
                         return;
                     }
                 }
             }
-
-            
         }
     }
+
 
 
     void PostSolve(b2Contact* contact, const b2ContactImpulse* impulse) {};
@@ -145,6 +148,41 @@ public:
 //        char *objName = strdup("Brick");
 //        [self AddObject:objName newObject:newObj];
   
+        
+        // Wall dimensions
+        float wallThickness = WALL_THICKNESS;
+        float playWidth = BRICK_COLUMNS * (BRICK_WIDTH + BRICK_SPACING);
+        float playHeight = BRICK_ROWS * (BRICK_HEIGHT + BRICK_SPACING) + 100;
+
+        // TOP WALL - Consistent with SceneKit
+        b2BodyDef topWallDef;
+        topWallDef.position.Set(BRICK_POS_X + (playWidth / 2) - 20, BRICK_POS_Y + playHeight-80 + wallThickness);
+        b2Body* topWall = world->CreateBody(&topWallDef);
+
+        b2PolygonShape topWallShape;
+        topWallShape.SetAsBox(playWidth / 2, wallThickness / 2);
+        topWall->CreateFixture(&topWallShape, 0.0f);
+
+        // LEFT WALL - Consistent with SceneKit
+        b2BodyDef leftWallDef;
+        leftWallDef.position.Set(BRICK_POS_X - wallThickness - 10,  // Left edge
+                                 BRICK_POS_Y + (playHeight / 2) - 70);  // Center vertically
+        b2Body* leftWall = world->CreateBody(&leftWallDef);
+
+        b2PolygonShape leftWallShape;
+        leftWallShape.SetAsBox(wallThickness / 2, (playHeight / 2) + 50);  // Correct size
+        leftWall->CreateFixture(&leftWallShape, 0.0f);
+
+        // RIGHT WALL - Consistent with SceneKit
+        b2BodyDef rightWallDef;
+        rightWallDef.position.Set(BRICK_POS_X + (playWidth / 2) + (wallThickness / 2) + 20,
+                                  BRICK_POS_Y + (playHeight / 2) - 70);
+        b2Body* rightWall = world->CreateBody(&rightWallDef);
+
+        b2PolygonShape rightWallShape;
+        rightWallShape.SetAsBox(wallThickness / 2, (playHeight / 2) + 50);
+        rightWall->CreateFixture(&rightWallShape, 0.0f);
+        
         
         // Add multiple bricks in a grid
         for (int row = 0; row < BRICK_ROWS; row++) {
@@ -341,6 +379,7 @@ public:
 {
     // Set some flag here for processing later...
     ballLaunched = true;
+    
 }
 
 -(void) AddObject:(char *)name newObject:(struct PhysicsObject *)newObj

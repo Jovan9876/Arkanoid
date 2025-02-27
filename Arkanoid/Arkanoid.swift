@@ -33,10 +33,11 @@ class Box2DDemo: SCNScene {
         
         setupCamera()
         
-        // Add the ball and the brick
+        // Add the walls only for testing, ball and the brick
         addBall()
         addBricks()
-        
+//        addWalls() for testing
+
         // Initialize the Box2D object
         box2D = CBox2D()
         //        box2D.helloWorld()  // If you want to test the HelloWorld example of Box2D
@@ -155,6 +156,50 @@ class Box2DDemo: SCNScene {
 //        
 //    }
   
+//    func addWalls() {
+//        // FOR TESTING
+//        let wallThickness: CGFloat = CGFloat(WALL_THICKNESS) // 1.0f
+//        
+//        let playWidth: CGFloat = CGFloat(BRICK_COLUMNS) * (CGFloat(BRICK_WIDTH) + CGFloat(BRICK_SPACING))
+//        let playHeight: CGFloat = CGFloat(BRICK_ROWS) * (CGFloat(BRICK_HEIGHT) + CGFloat(BRICK_SPACING) + 100)
+//
+//        let wallHeight: CGFloat = CGFloat(playHeight) + 100  // Increase height for full coverage
+//        
+//        let wallMaterial = SCNMaterial()
+//        wallMaterial.diffuse.contents = UIColor.white
+//
+//        // TOP WALL - Consistent with Box2D
+//        let topWall = SCNNode(geometry: SCNBox(width: playWidth, height: wallThickness, length: 1, chamferRadius: 0))
+//        topWall.position = SCNVector3(Float(BRICK_POS_X) + Float(playWidth) / 2 - 20,  // Align center
+//                                      Float(BRICK_POS_Y) + Float(playHeight) + Float(wallThickness), 0)
+//
+//        topWall.geometry?.materials = [wallMaterial]
+//        rootNode.addChildNode(topWall)
+//        
+//        
+//        // LEFT WALL - Consistent with Box2D
+//        let leftWall = SCNNode(geometry: SCNBox(width: wallThickness, height: wallHeight, length: 1, chamferRadius: 0))
+//        leftWall.position = SCNVector3(Float(BRICK_POS_X) - Float(wallThickness + 10),  // Left edge
+//                                       Float(BRICK_POS_Y) + Float(playHeight) / 2 - 70,  // Center vertically
+//                                       0)
+//
+//        leftWall.geometry?.materials = [wallMaterial]
+//        rootNode.addChildNode(leftWall)
+//
+//        // RIGHT WALL - Consistent with Box2D
+//        let rightWall = SCNNode(geometry: SCNBox(width: wallThickness, height: wallHeight, length: 1, chamferRadius: 0))
+//        rightWall.position = SCNVector3(Float(BRICK_POS_X) + Float(playWidth) / 2 + Float(wallThickness) / 2 + 20,
+//                                        Float(BRICK_POS_Y) + Float(playHeight) / 2 - 70,
+//                                        0)  // Keep it on the same Z-plane
+//
+//        rightWall.geometry?.materials = [wallMaterial]
+//        rootNode.addChildNode(rightWall)
+//        
+//    }
+
+
+
+    
     @MainActor
     func updateGameObjects(elapsedTime: Double) {
         
