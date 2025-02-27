@@ -1,9 +1,7 @@
 //====================================================================
 //
-// (c) Borna Noureddin
 // COMP 8051   British Columbia Institute of Technology
-// Lab10: Demo using Box2D for a ball that can be launched and
-//        a falling brick that disappears when it hits the ball
+// Assignment 2: Clone of Arkanoid
 //
 //====================================================================
 
@@ -18,6 +16,13 @@ class Box2DDemo: SCNScene {
     var lastTime = CFTimeInterval(floatLiteral: 0)  // Used to calculate elapsed time on each update
     
     private var box2D: CBox2D!                      // Points to Objective-C++ wrapper for C++ Box2D library
+    private var lives = 3
+    private var score = 0
+
+//    private var livesTextNode = SCNNode()
+    private var livesTextNode: SCNNode? // Reference for lives text
+    private var scoreTextNode: SCNNode? // Reference for score text
+
     
     // Catch if initializer in init() fails
     required init?(coder aDecoder: NSCoder) {
@@ -33,9 +38,11 @@ class Box2DDemo: SCNScene {
         
         setupCamera()
         
-        // Add the walls only for testing, ball and the brick
+        // Add the walls only for testing, ball, bricks, and lives text
         addBall()
         addBricks()
+        addLivesText()
+        addScoreText()
 //        addWalls() for testing
 
         // Initialize the Box2D object
@@ -46,7 +53,7 @@ class Box2DDemo: SCNScene {
         let updater = CADisplayLink(target: self, selector: #selector(gameLoop))
         updater.preferredFrameRateRange = CAFrameRateRange(minimum: 120.0, maximum: 120.0, preferred: 120.0)
         updater.add(to: RunLoop.main, forMode: RunLoop.Mode.default)
-        
+
     }
     
     
@@ -63,20 +70,60 @@ class Box2DDemo: SCNScene {
     }
     
     
+    func addLivesText() {
+        let textGeometry = SCNText(string: "Balls: 3", extrusionDepth: 0.0)
+        textGeometry.font = UIFont.systemFont(ofSize: 1)
+        textGeometry.firstMaterial?.diffuse.contents = UIColor.white
+
+        let textNode = SCNNode(geometry: textGeometry)
+        textNode.position = SCNVector3(-1.25, -1.6, -5) // Position
+        textNode.scale = SCNVector3(0.2, 0.2, 0.2) // Adjust scale
+        textNode.constraints = [SCNBillboardConstraint()] // Make the text face the camera
+
+        cameraNode.addChildNode(textNode)
+        self.livesTextNode = textNode
+    }
+
+    
+    func updateLivesText() {
+        
+        if let textGeometry = livesTextNode?.geometry as? SCNText {
+            textGeometry.string = "Balls: \(lives)"
+        }
+
+    }
+
+    func addScoreText() {
+        let textGeometry = SCNText(string: "Score: 0", extrusionDepth: 0.0)
+        textGeometry.font = UIFont.systemFont(ofSize: 1)
+        textGeometry.firstMaterial?.diffuse.contents = UIColor.white
+
+        let textNode = SCNNode(geometry: textGeometry)
+        textNode.position = SCNVector3(0, -1.6, -5) // Position
+        textNode.scale = SCNVector3(0.2, 0.2, 0.2) // Adjust scale
+        textNode.constraints = [SCNBillboardConstraint()] // Make the text face the camera
+
+        cameraNode.addChildNode(textNode)
+        self.scoreTextNode = textNode
+    }
+
+    
+    func updateScoreText() {
+        
+        if let textGeometry = scoreTextNode?.geometry as? SCNText {
+            textGeometry.string = "Score: \(score)"
+        }
+
+    }
+    
+    
     func addBricks() {
         
-//        let theBrick = SCNNode(geometry: SCNBox(width: CGFloat(BRICK_WIDTH), height: CGFloat(BRICK_HEIGHT), length: 1, chamferRadius: 0))
-//        theBrick.name = "Brick"
-//        theBrick.geometry?.firstMaterial?.diffuse.contents = UIColor.red
-//        theBrick.position = SCNVector3(Int(BRICK_POS_X), Int(BRICK_POS_Y), 0)
-//        rootNode.addChildNode(theBrick)
-        
-        
-        let brickWidth: CGFloat = CGFloat(BRICK_WIDTH)  // 20.0f
-        let brickHeight: CGFloat = CGFloat(BRICK_HEIGHT)  // 5.0f
-        let brickSpacing: CGFloat = CGFloat(BRICK_SPACING)  // 5
-        let startX: CGFloat = CGFloat(BRICK_POS_X)  // -12
-        let startY: CGFloat = CGFloat(BRICK_POS_Y)  // 40
+        let brickWidth: CGFloat = CGFloat(BRICK_WIDTH)
+        let brickHeight: CGFloat = CGFloat(BRICK_HEIGHT)
+        let brickSpacing: CGFloat = CGFloat(BRICK_SPACING)
+        let startX: CGFloat = CGFloat(BRICK_POS_X)
+        let startY: CGFloat = CGFloat(BRICK_POS_Y)
 
         let colors: [UIColor] = [.red, .blue, .green]  // Possible brick colors
         
@@ -124,82 +171,6 @@ class Box2DDemo: SCNScene {
     }
     
     
-//    @MainActor
-//    func updateGameObjects(elapsedTime: Double) {
-//        
-//        // Update Box2D physics simulation
-//        box2D.update(Float(elapsedTime))
-//        
-//        // Get ball position and update ball node
-//        let ballPos = UnsafePointer(box2D.getObject("Ball"))
-//        let theBall = rootNode.childNode(withName: "Ball", recursively: true)
-//        theBall?.position.x = (ballPos?.pointee.loc.x)!
-//        theBall?.position.y = (ballPos?.pointee.loc.y)!
-//        //        print("Ball pos: \(String(describing: theBall?.position.x)) \(String(describing: theBall?.position.y))")
-//        
-//        // Get brick position and update brick node
-//        let brickPos = UnsafePointer(box2D.getObject("Brick"))
-//        let theBrick = rootNode.childNode(withName: "Brick", recursively: true)
-//        if (brickPos != nil) {
-//            
-//            // The brick is visible, so set the position
-//            theBrick?.position.x = (brickPos?.pointee.loc.x)!
-//            theBrick?.position.y = (brickPos?.pointee.loc.y)!
-//            //            print("Brick pos: \(String(describing: theBrick?.position.x)) \(String(describing: theBrick?.position.y))")
-//            
-//        } else {
-//            
-//            // The brick has disappeared, so hide it
-//            theBrick?.isHidden = true
-//            
-//        }
-//        
-//    }
-  
-//    func addWalls() {
-//        // FOR TESTING
-//        let wallThickness: CGFloat = CGFloat(WALL_THICKNESS) // 1.0f
-//        
-//        let playWidth: CGFloat = CGFloat(BRICK_COLUMNS) * (CGFloat(BRICK_WIDTH) + CGFloat(BRICK_SPACING))
-//        let playHeight: CGFloat = CGFloat(BRICK_ROWS) * (CGFloat(BRICK_HEIGHT) + CGFloat(BRICK_SPACING) + 100)
-//
-//        let wallHeight: CGFloat = CGFloat(playHeight) + 100  // Increase height for full coverage
-//        
-//        let wallMaterial = SCNMaterial()
-//        wallMaterial.diffuse.contents = UIColor.white
-//
-//        // TOP WALL - Consistent with Box2D
-//        let topWall = SCNNode(geometry: SCNBox(width: playWidth, height: wallThickness, length: 1, chamferRadius: 0))
-//        topWall.position = SCNVector3(Float(BRICK_POS_X) + Float(playWidth) / 2 - 20,  // Align center
-//                                      Float(BRICK_POS_Y) + Float(playHeight) + Float(wallThickness), 0)
-//
-//        topWall.geometry?.materials = [wallMaterial]
-//        rootNode.addChildNode(topWall)
-//        
-//        
-//        // LEFT WALL - Consistent with Box2D
-//        let leftWall = SCNNode(geometry: SCNBox(width: wallThickness, height: wallHeight, length: 1, chamferRadius: 0))
-//        leftWall.position = SCNVector3(Float(BRICK_POS_X) - Float(wallThickness + 10),  // Left edge
-//                                       Float(BRICK_POS_Y) + Float(playHeight) / 2 - 70,  // Center vertically
-//                                       0)
-//
-//        leftWall.geometry?.materials = [wallMaterial]
-//        rootNode.addChildNode(leftWall)
-//
-//        // RIGHT WALL - Consistent with Box2D
-//        let rightWall = SCNNode(geometry: SCNBox(width: wallThickness, height: wallHeight, length: 1, chamferRadius: 0))
-//        rightWall.position = SCNVector3(Float(BRICK_POS_X) + Float(playWidth) / 2 + Float(wallThickness) / 2 + 20,
-//                                        Float(BRICK_POS_Y) + Float(playHeight) / 2 - 70,
-//                                        0)  // Keep it on the same Z-plane
-//
-//        rightWall.geometry?.materials = [wallMaterial]
-//        rootNode.addChildNode(rightWall)
-//        
-//    }
-
-
-
-    
     @MainActor
     func updateGameObjects(elapsedTime: Double) {
         
@@ -212,6 +183,18 @@ class Box2DDemo: SCNScene {
             if let theBall = rootNode.childNode(withName: "Ball", recursively: true) {
                 theBall.position.x = ballPos.pointee.loc.x
                 theBall.position.y = ballPos.pointee.loc.y
+                // Check if the ball has fallen below the screen
+                if theBall.position.y < Float(BALL_POS_X) - 10 {
+                    lives -= 1  // Reduce player lives
+                    updateLivesText()
+                    if lives > 0 {
+                        print("Ball lost! Lives left: \(lives)")
+                        resetPhysics()
+                    } else {
+                        print("Game Over!")
+                        resetGame()
+                    }
+                }
             }
         }
         
@@ -225,17 +208,18 @@ class Box2DDemo: SCNScene {
                     if brickPos != nil {
                         theBrick.position.x = brickPos!.pointee.loc.x
                         theBrick.position.y = brickPos!.pointee.loc.y
-                    } else {
-                        theBrick.isHidden = true // Hide the brick when it’s destroyed
+                    } else if !theBrick.isHidden {
+                        // If the brick is destroyed, increase score
+                        theBrick.isHidden = true
+                        score += 1
+                        updateScoreText()
                     }
                 }
             }
         }
 
-
     }
 
-    
     
     // Function to be called by double-tap gesture: launch the ball
     @MainActor
@@ -251,8 +235,32 @@ class Box2DDemo: SCNScene {
     func resetPhysics() {
         
         box2D.reset()
-        let theBrick = rootNode.childNode(withName: "Brick", recursively: true)
-        theBrick?.isHidden = false
+        
+    }
+    
+    @MainActor
+    func resetGame() {
+        
+        print("Reloading Game...")
+
+        rootNode.childNodes.forEach {
+            if $0 != cameraNode { // Keep camera and its children (lives text)
+                $0.removeFromParentNode()
+            }
+        }
+
+        box2D = CBox2D()
+        lives = 3
+        score = 0
+
+        
+        addBricks()
+        addBall()
+
+        updateLivesText()  // Update lives text
+        updateScoreText() // Update score text
+        
+        print("Game Reset Complete")
         
     }
     

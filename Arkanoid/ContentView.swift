@@ -24,13 +24,6 @@ struct ContentView: View {
                             .onTapGesture(count: 2) {
                                 scene.handleDoubleTap()
                             }
-                        Button(action: {
-                            scene.resetPhysics()
-                        }, label: {
-                            Text("Reset")
-                                .font(.system(size: 24))
-                                .padding(.bottom, 50)
-                        })
                     }
                     .background(.black)
                 } label: { Text("Arkanoid: Box2D") }

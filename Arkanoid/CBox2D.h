@@ -18,9 +18,9 @@
 
 #define BRICK_POS_X           -24
 #define BRICK_POS_Y           40
-#define BRICK_WIDTH           10.0f
+#define BRICK_WIDTH           6.0f
 #define BRICK_HEIGHT          3.0f
-#define BRICK_ROWS            5
+#define BRICK_ROWS            7
 #define BRICK_COLUMNS         5
 #define BRICK_SPACING         6
 #define BRICK_WAIT            1.0f
@@ -55,9 +55,6 @@ struct PhysicsObject {
 
 // Wrapper class
 @interface CBox2D : NSObject
-//    std::map<std::string, struct PhysicsObject *> physicsObjects;
-//}
-
 
 
 
@@ -65,19 +62,13 @@ struct PhysicsObject {
 
 -(void) LaunchBall;                                                         // launch the ball
 -(void) Update:(float)elapsedTime;                                          // update the Box2D engine
-//-(void) RegisterHit;                                                        // Register when the ball hits the brick
-- (void)RegisterHit:(const char *)brickName;
+- (void)RegisterHit:(const char *)brickName;                                // Register when the ball hits the brick pass in the name of the hit brick
 
 -(void) AddObject:(char *)name newObject:(struct PhysicsObject *)newObj;    // Add a new physics object
 -(struct PhysicsObject *) GetObject:(const char *)name;                     // Get a physics object by name
 -(void) Reset;                                                              // Reset Box2D
 
 - (void *)GetPhysicsObjects;
-
-
-//-(const char *)GetLastHitBrick;                                             // Get last hit brick
-
-
 
 
 

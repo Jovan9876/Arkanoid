@@ -141,14 +141,6 @@ public:
         contactListener = new CContactListener();
         world->SetContactListener(contactListener);
         
-//        // Set up the brick and ball objects for Box2D
-//        newObj->loc.x = BRICK_POS_X;
-//        newObj->loc.y = BRICK_POS_Y;
-//        newObj->objType = ObjTypeBox;
-//        char *objName = strdup("Brick");
-//        [self AddObject:objName newObject:newObj];
-  
-        
         // Wall dimensions
         float wallThickness = WALL_THICKNESS;
         float playWidth = BRICK_COLUMNS * (BRICK_WIDTH + BRICK_SPACING);
@@ -165,7 +157,7 @@ public:
 
         // LEFT WALL - Consistent with SceneKit
         b2BodyDef leftWallDef;
-        leftWallDef.position.Set(BRICK_POS_X - wallThickness - 10,  // Left edge
+        leftWallDef.position.Set(BRICK_POS_X - wallThickness - 4,  // Left edge
                                  BRICK_POS_Y + (playHeight / 2) - 70);  // Center vertically
         b2Body* leftWall = world->CreateBody(&leftWallDef);
 
@@ -277,11 +269,6 @@ public:
     {
         
         // Stop the ball and make sure it is not affected by forces
-//        ((b2Body *)theBall->b2ShapePtr)->SetLinearVelocity(b2Vec2(0, 0));
-//        ((b2Body *)theBall->b2ShapePtr)->SetAngularVelocity(0);
-//        ((b2Body *)theBall->b2ShapePtr)->SetAwake(false);
-//        ((b2Body *)theBall->b2ShapePtr)->SetActive(false);
-        
         // Ensure theBall is valid before accessing it
         if (theBall && theBall->b2ShapePtr) {
             ((b2Body *)theBall->b2ShapePtr)->SetLinearVelocity(b2Vec2(0, 0));
@@ -290,14 +277,6 @@ public:
             ((b2Body *)theBall->b2ShapePtr)->SetActive(false);
         }
 
-        
-//
-//        // Destroy the brick from Box2D and related objects in this class
-//        world->DestroyBody(((b2Body *)theBrick->b2ShapePtr));
-//        delete theBrick;
-//        theBrick = nullptr;
-//        physicsObjects.erase("Brick");
-//        ballHitBrick = false;   // until a reset and re-launch
   
         // Find which brick was hit and remove only that one
         for (auto it = physicsObjects.begin(); it != physicsObjects.end(); ++it) {
@@ -350,19 +329,6 @@ public:
     
 }
 
-//-(void)RegisterHit
-//{
-//    for (auto it = physicsObjects.begin(); it != physicsObjects.end(); ++it) {
-//        if (it->second && it->second->b2ShapePtr) {
-//            std::string hitBrickName = it->first;
-//            if (hitBrickName.find("Brick") != std::string::npos) { // Ensure it's a brick
-//                lastHitBrick = hitBrickName;  // Store the hit brick's name
-//                bricksToDestroy.push_back(hitBrickName); // Mark for removal later
-//                break;
-//            }
-//        }
-//    }
-//}
 
 - (void)RegisterHit:(const char *)brickName {
     std::string brick = brickName; // Use directly in C++
@@ -371,14 +337,26 @@ public:
 
 
 
-
-
-
-
 -(void)LaunchBall
 {
     // Set some flag here for processing later...
     ballLaunched = true;
+    
+    // Get the ball object
+    struct PhysicsObject *theBall = physicsObjects["Ball"];
+    if (!theBall || !theBall->b2ShapePtr) return;
+
+    b2Body *ballBody = (b2Body *)theBall->b2ShapePtr;
+
+    // Reset velocity
+    ballBody->SetLinearVelocity(b2Vec2(0, 0));
+    ballBody->SetAngularVelocity(0);
+
+    // Apply **sideways** force instead of vertical
+    float launchSpeed = BALL_VELOCITY;  // Adjust if needed
+    ballBody->ApplyLinearImpulse(b2Vec2(launchSpeed, 0),  // Move sideways
+                                 ballBody->GetWorldCenter(),
+                                 true);
     
 }
 
@@ -468,22 +446,6 @@ public:
 -(void)Reset
 {
     
-    // Look up the brick, and if it exists, destroy it and delete it
-    struct PhysicsObject *theBrick = physicsObjects["Brick"];
-    if (theBrick) {
-        world->DestroyBody(((b2Body *)theBrick->b2ShapePtr));
-        delete theBrick;
-        theBrick = nullptr;
-        physicsObjects.erase("Brick");
-    }
-    
-    // Create a new brick object
-    theBrick = new struct PhysicsObject;
-    theBrick->loc.x = BRICK_POS_X;
-    theBrick->loc.y = BRICK_POS_Y;
-    theBrick->objType = ObjTypeBox;
-    char *objName = strdup("Brick");
-    [self AddObject:objName newObject:theBrick];
     
     // Look up the ball object and re-initialize the position, etc.
     struct PhysicsObject *theBall = physicsObjects["Ball"];
@@ -496,7 +458,6 @@ public:
     ((b2Body *)theBall->b2ShapePtr)->SetActive(true);
     
     totalElapsedTime = 0;
-    ballHitBrick = false;
     ballLaunched = false;
     
 }
@@ -504,11 +465,6 @@ public:
 - (void *)GetPhysicsObjects {
     return (void *)&physicsObjects;
 }
-
-
-//-(const char *)GetLastHitBrick {
-//    return lastHitBrick.c_str(); // Convert std::string to C string
-//}
 
 
 -(void)HelloWorld
