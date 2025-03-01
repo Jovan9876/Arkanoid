@@ -25,17 +25,22 @@
 #define BRICK_SPACING         6
 #define BRICK_WAIT            1.0f
 #define BALL_POS_X            0
-#define BALL_POS_Y            5
+#define BALL_POS_Y            15
 #define BALL_RADIUS           2.0f
 #define BALL_VELOCITY         1000.0f
 #define WALL_THICKNESS        1.0f
 #define WALL_LENGTH           100.0f
+#define PADDLE_POS_X           0
+#define PADDLE_POS_Y           12
+#define PADDLE_WIDTH           10.0f
+#define PADDLE_HEIGHT          3.0f
+#define PADDLE_ROWS            1
+#define PADDLE_COLUMNS         1
+#define PADDLE_SPACING         6
+#define PADDLE_WAIT            1.0f
 
 // You can define other object types here
 typedef enum { ObjTypeBox=0, ObjTypeCircle=1 } ObjectType;
-
-
-
 
 // Location of each object in our physics world
 struct PhysicsLocation {

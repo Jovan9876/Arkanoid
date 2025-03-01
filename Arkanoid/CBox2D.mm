@@ -131,31 +131,31 @@ public:
         // Initialize Box2D
         gravity = new b2Vec2(0.0f, -10.0f);
         world = new b2World(*gravity);
-
+        
         contactListener = new CContactListener();
         world->SetContactListener(contactListener);
         
         // Wall dimensions
         float wallThickness = WALL_THICKNESS;
         float wallLength = WALL_LENGTH;
-
+        
         // TOP WALL - Consistent with SceneKit
         b2BodyDef topWallDef;
         topWallDef.type = b2_staticBody; // Assign static
         topWallDef.position.Set(0, screenHeight);
         b2Body* topWall = world->CreateBody(&topWallDef);
-
+        
         b2PolygonShape topWallShape;
         topWallShape.SetAsBox(wallLength, wallThickness);
         topWall->CreateFixture(&topWallShape, 0.0f);
-
+        
         
         // LEFT WALL - Consistent with SceneKit
         b2BodyDef leftWallDef;
         leftWallDef.type = b2_staticBody; // Assign static
         leftWallDef.position.Set(-screenWidth, 0);
         b2Body* leftWall = world->CreateBody(&leftWallDef);
-
+        
         b2PolygonShape leftWallShape;
         leftWallShape.SetAsBox(wallThickness, wallLength);
         leftWall->CreateFixture(&leftWallShape, 0.0f);
@@ -165,7 +165,7 @@ public:
         rightWallDef.type = b2_staticBody; // Assign static
         rightWallDef.position.Set(screenWidth, 0);
         b2Body* rightWall = world->CreateBody(&rightWallDef);
-
+        
         b2PolygonShape rightWallShape;
         rightWallShape.SetAsBox(wallThickness, wallLength);
         rightWall->CreateFixture(&rightWallShape, 0.0f);
@@ -182,13 +182,13 @@ public:
                 
                 char objName[20];
                 snprintf(objName, sizeof(objName), "Brick_%d_%d", row, col); // Unique brick name
-
+                
                 [self AddObject:objName newObject:newObj];
             }
         }
-
+        
         struct PhysicsObject *newObj = new struct PhysicsObject;
-
+        
         newObj = new struct PhysicsObject;
         newObj->loc.x = BALL_POS_X;
         newObj->loc.y = BALL_POS_Y;
@@ -199,7 +199,7 @@ public:
         totalElapsedTime = 0;
         ballHitBrick = false;
         ballLaunched = false;
-        
+
     }
     
     return self;
@@ -220,6 +220,7 @@ public:
     
     // Get pointers to the brick and ball physics objects
     struct PhysicsObject *theBrick = physicsObjects[std::string("Brick")];
+    struct PhysicsObject *thePaddle = physicsObjects[std::string("Paddle")];
     struct PhysicsObject *theBall = physicsObjects["Ball"];
     
     // Check here if we need to launch the ball

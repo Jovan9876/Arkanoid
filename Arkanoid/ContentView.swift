@@ -24,7 +24,13 @@ struct ContentView: View {
                             .onTapGesture(count: 2) {
                                 scene.handleDoubleTap()
                             }
-                    }
+                        
+                            .gesture(DragGesture()
+                                     .onChanged { value in
+                                      let translation = value.translation
+                                      scene.handleDrag(translation.width)
+                                                    }
+                                     )}
                     .background(.black)
                 } label: { Text("Arkanoid: Box2D") }
                     .onSubmit {

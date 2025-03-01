@@ -19,9 +19,11 @@ class ArkanoidGame: SCNScene {
     private var lives = 3
     private var score = 0
     private var totalBricks = 0
+    private var startPOS = 1
     
     private var livesTextNode: SCNNode? // Reference for lives text
     private var scoreTextNode: SCNNode? // Reference for score text
+    private var thePaddle: SCNNode!
     
     // Get screen width and height
     let screenHeight = UIScreen.main.bounds.height / 8 // Divide by 8 for correct position
@@ -44,19 +46,20 @@ class ArkanoidGame: SCNScene {
         // Add the walls only for testing, ball, bricks, and lives text
         addBall()
         addBricks()
+        addPaddle()
         addLivesText()
         addScoreText()
-//        addWalls() // for testing
-
+        //        addWalls() // for testing
+        
         // Initialize the Box2D object
         box2D = CBox2D(Float(screenWidth), screenHeight: Float(screenHeight))
-
+        
         
         // Setup the game loop tied to the display refresh
         let updater = CADisplayLink(target: self, selector: #selector(gameLoop))
         updater.preferredFrameRateRange = CAFrameRateRange(minimum: 120.0, maximum: 120.0, preferred: 120.0)
         updater.add(to: RunLoop.main, forMode: RunLoop.Mode.default)
-
+        
     }
     
     
@@ -64,28 +67,28 @@ class ArkanoidGame: SCNScene {
         // FOR TESTING
         let wallThickness: CGFloat = CGFloat(WALL_THICKNESS) // 1.0f
         let wallLength: CGFloat = CGFloat(WALL_LENGTH)  // Increased height for full coverage
-    
+        
         let wallMaterial = SCNMaterial()
         wallMaterial.diffuse.contents = UIColor.white
-            
+        
         // TOP WALL - Consistent with Box2D
         let topWall = SCNNode(geometry: SCNBox(width: wallLength, height: wallThickness, length: 1, chamferRadius: 0))
         topWall.position = SCNVector3(0, screenHeight, 0)
         topWall.geometry?.materials = [wallMaterial]
         rootNode.addChildNode(topWall)
-            
+        
         // LEFT WALL - Consistent with Box2D
         let leftWall = SCNNode(geometry: SCNBox(width: wallThickness, height: wallLength, length: 1, chamferRadius: 0))
         leftWall.position = SCNVector3(-screenWidth, 0, 0)
         leftWall.geometry?.materials = [wallMaterial]
         rootNode.addChildNode(leftWall)
-  
+        
         // RIGHT WALL - Consistent with Box2D
         let rightWall = SCNNode(geometry: SCNBox(width: wallThickness, height: wallLength, length: 1, chamferRadius: 0))
         rightWall.position = SCNVector3(screenWidth, 0, 0)
         rightWall.geometry?.materials = [wallMaterial]
         rootNode.addChildNode(rightWall)
-    
+        
     }
     
     // Function to setup the camera node
@@ -105,46 +108,46 @@ class ArkanoidGame: SCNScene {
         let textGeometry = SCNText(string: "Balls: 3", extrusionDepth: 0.0)
         textGeometry.font = UIFont.systemFont(ofSize: 1)
         textGeometry.firstMaterial?.diffuse.contents = UIColor.white
-
+        
         let textNode = SCNNode(geometry: textGeometry)
         textNode.position = SCNVector3(-1.25, -1.6, -5) // Position
         textNode.scale = SCNVector3(0.2, 0.2, 0.2) // Adjust scale
         textNode.constraints = [SCNBillboardConstraint()] // Make the text face the camera
-
+        
         cameraNode.addChildNode(textNode)
         self.livesTextNode = textNode
     }
-
+    
     
     func updateLivesText() {
         
         if let textGeometry = livesTextNode?.geometry as? SCNText {
             textGeometry.string = "Balls: \(lives)"
         }
-
+        
     }
-
+    
     func addScoreText() {
         let textGeometry = SCNText(string: "Score: 0", extrusionDepth: 0.0)
         textGeometry.font = UIFont.systemFont(ofSize: 1)
         textGeometry.firstMaterial?.diffuse.contents = UIColor.white
-
+        
         let textNode = SCNNode(geometry: textGeometry)
         textNode.position = SCNVector3(0, -1.6, -5) // Position
         textNode.scale = SCNVector3(0.2, 0.2, 0.2) // Adjust scale
         textNode.constraints = [SCNBillboardConstraint()] // Make the text face the camera
-
+        
         cameraNode.addChildNode(textNode)
         self.scoreTextNode = textNode
     }
-
+    
     
     func updateScoreText() {
         
         if let textGeometry = scoreTextNode?.geometry as? SCNText {
             textGeometry.string = "Score: \(score)"
         }
-
+        
     }
     
     
@@ -155,7 +158,7 @@ class ArkanoidGame: SCNScene {
         let brickSpacing: CGFloat = CGFloat(BRICK_SPACING)
         let startX: CGFloat = CGFloat(BRICK_POS_X)
         let startY: CGFloat = CGFloat(BRICK_POS_Y)
-
+        
         let colors: [UIColor] = [.red, .blue, .green]  // Possible brick colors
         
         for row in 0..<Int(BRICK_ROWS) {  // 5 rows
@@ -164,11 +167,11 @@ class ArkanoidGame: SCNScene {
                 let brick = SCNNode(geometry: SCNBox(width: brickWidth, height: brickHeight, length: 1, chamferRadius: 0))
                 brick.name = "Brick_\(row)_\(col)"
                 brick.geometry?.firstMaterial?.diffuse.contents = colors.randomElement()
-
+                
                 // Calculate position based on row & column indices
                 let xPos = startX + CGFloat(col) * (brickWidth + brickSpacing)
                 let yPos = startY + CGFloat(row) * (brickHeight + brickSpacing)
-
+                
                 brick.position = SCNVector3(Int(xPos), Int(yPos), 0)
                 rootNode.addChildNode(brick)
             }
@@ -185,6 +188,23 @@ class ArkanoidGame: SCNScene {
         theBall.geometry?.firstMaterial?.diffuse.contents = UIColor.white
         theBall.position = SCNVector3(Int(BALL_POS_X), Int(BALL_POS_Y), 0)
         rootNode.addChildNode(theBall)
+        
+    }
+    
+    func addPaddle() {
+        
+        let paddleWidth: CGFloat = CGFloat(PADDLE_WIDTH)
+        let paddleHeight: CGFloat = CGFloat(PADDLE_HEIGHT)
+//        let paddleSpacing: CGFloat = CGFloat(PADDLE_SPACING)
+//        let startX: CGFloat = CGFloat(PADDLE_POS_X)
+//        let startY: CGFloat = CGFloat(PADDLE_POS_Y)
+        
+        
+        thePaddle = SCNNode(geometry: SCNBox(width: paddleWidth, height: paddleHeight, length: 1, chamferRadius: 0))
+        thePaddle.name = "Paddle"
+        thePaddle.geometry?.firstMaterial?.diffuse.contents = UIColor.white
+        thePaddle.position = SCNVector3(Int(PADDLE_POS_X), Int(PADDLE_POS_Y), 0)
+        rootNode.addChildNode(thePaddle)
         
     }
     
@@ -229,13 +249,13 @@ class ArkanoidGame: SCNScene {
                 }
             }
         }
-                
+        
         // Loop through all bricks and update positions
         for row in 0..<Int(BRICK_ROWS) {
             for col in 0..<Int(BRICK_COLUMNS) {
                 let brickName = "Brick_\(row)_\(col)"
                 let brickPos = UnsafePointer(box2D.getObject(brickName))
-
+                
                 if let theBrick = rootNode.childNode(withName: brickName, recursively: true) {
                     if brickPos != nil {
                         theBrick.position.x = brickPos!.pointee.loc.x
@@ -249,14 +269,22 @@ class ArkanoidGame: SCNScene {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                             self.resetGame() // Reset game u win // flashes bricks aswell
                         }
-
+                        
                     }
                 }
             }
         }
         
+        if let paddlePtr = box2D.getObject("Paddle") {
+            let paddlePos = UnsafePointer(paddlePtr)
+            if let thePaddle = rootNode.childNode(withName: "Paddle", recursively: true) {
+                thePaddle.position.x = paddlePos.pointee.loc.x
+                thePaddle.position.y = paddlePos.pointee.loc.y
+            }
+        }
+        
     }
-
+    
     
     // Function to be called by double-tap gesture: launch the ball
     @MainActor
@@ -265,7 +293,6 @@ class ArkanoidGame: SCNScene {
         box2D.launchBall()
         
     }
-    
     
     // Function to reset the physics (reset Box2D and reset the brick)
     @MainActor
@@ -279,7 +306,7 @@ class ArkanoidGame: SCNScene {
     func resetGame() {
         
         print("Reloading Game...")
-
+        
         rootNode.childNodes.forEach {
             if $0 != cameraNode { // Keep camera and its children (lives text)
                 $0.removeFromParentNode()
@@ -293,7 +320,8 @@ class ArkanoidGame: SCNScene {
         
         addBricks()
         addBall()
-
+        addPaddle()
+        
         updateLivesText()  // Update lives text
         updateScoreText() // Update score text
         
@@ -301,6 +329,11 @@ class ArkanoidGame: SCNScene {
         
     }
     
+    @MainActor
+    // Function to be called by drag gesture
+    func handleDrag(_ translation: CGFloat) {
+        // Move the paddle using the drag gesture
+        thePaddle.position.x += Float(translation / 75)
+    }
+    
 }
-
-
