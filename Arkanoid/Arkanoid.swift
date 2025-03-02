@@ -330,17 +330,24 @@ class ArkanoidGame: SCNScene {
     }
     
     @MainActor
-    // Function to be called by drag gesture
     func handleDrag(_ translation: CGFloat) {
-            // Calculate new position
-            let newPosition = thePaddle.position.x + Float(translation / 75)
-
-            // Clamp the position within bounds
-        let clampedPosition = max(Float(-screenWidth), min(Float(screenWidth), newPosition))
-
-            // Apply the clamped position
-            thePaddle.position.x = clampedPosition
+        
+        // Calculate new position
+        let newPosition = thePaddle.position.x + Float(translation / 75)
+        
+        // How far to each side we allow the paddle to travel (based on half its width)
+        let halfPaddleWidth = Float(PADDLE_WIDTH / 2.0)
+        
+        // Compute left and right limits so the paddle doesn’t slip off-screen
+        let leftLimit  = -Float(screenWidth) + halfPaddleWidth
+        let rightLimit =  Float(screenWidth) - halfPaddleWidth
+        
+        // Clamp `newPosition` so it doesn’t exceed these limits
+        let clampedX = max(leftLimit, min(rightLimit, newPosition))
+        
+        // Set  paddle's x pos
+        thePaddle.position.x = clampedX
+        
     }
-    
 }
 

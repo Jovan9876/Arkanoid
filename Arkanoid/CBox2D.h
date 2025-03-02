@@ -20,8 +20,8 @@
 #define BRICK_POS_Y           40
 #define BRICK_WIDTH           6.0f
 #define BRICK_HEIGHT          3.0f
-#define BRICK_ROWS            1
-#define BRICK_COLUMNS         1
+#define BRICK_ROWS            7
+#define BRICK_COLUMNS         5
 #define BRICK_SPACING         6
 #define BRICK_WAIT            1.0f
 #define BALL_POS_X            0
@@ -31,13 +31,10 @@
 #define WALL_THICKNESS        1.0f
 #define WALL_LENGTH           100.0f
 #define PADDLE_POS_X           0
-#define PADDLE_POS_Y           12
+#define PADDLE_POS_Y           11
 #define PADDLE_WIDTH           10.0f
 #define PADDLE_HEIGHT          3.0f
-#define PADDLE_ROWS            1
-#define PADDLE_COLUMNS         1
-#define PADDLE_SPACING         6
-#define PADDLE_WAIT            1.0f
+
 
 // You can define other object types here
 typedef enum { ObjTypeBox=0, ObjTypeCircle=1 } ObjectType;
