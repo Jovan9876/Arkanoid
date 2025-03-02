@@ -43,14 +43,17 @@ public:
             // Get the bodies involved in the collision
             b2Body* bodyA = contact->GetFixtureA()->GetBody();
             b2Body* bodyB = contact->GetFixtureB()->GetBody();
+            b2Body* bodyC = contact->GetFixtureB()->GetBody();
 
             // Retrieve PhysicsObject structs from user data
             struct PhysicsObject *objDataA = (struct PhysicsObject *)(bodyA->GetUserData());
             struct PhysicsObject *objDataB = (struct PhysicsObject *)(bodyB->GetUserData());
+            struct PhysicsObject *objDataC = (struct PhysicsObject *)(bodyB->GetUserData());
 
             // Ensure objDataA is not NULL before accessing box2DObj
             if (!objDataA || !objDataA->box2DObj) return;
             if (!objDataB || !objDataB->box2DObj) return;
+            if (!objDataC || !objDataC->box2DObj) return;
 
             // Perform safe type conversion
             CBox2D *parentObj = (__bridge CBox2D *)(objDataA->box2DObj);
@@ -234,7 +237,6 @@ public:
                                                             true);
         ((b2Body *)theBall->b2ShapePtr)->SetActive(true);
         ballLaunched = false;
-        
     }
     
     // Check if it is time yet to drop the brick, and if so call SetAwake()

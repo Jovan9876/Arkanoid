@@ -202,7 +202,7 @@ class ArkanoidGame: SCNScene {
         
         thePaddle = SCNNode(geometry: SCNBox(width: paddleWidth, height: paddleHeight, length: 1, chamferRadius: 0))
         thePaddle.name = "Paddle"
-        thePaddle.geometry?.firstMaterial?.diffuse.contents = UIColor.white
+        thePaddle.geometry?.firstMaterial?.diffuse.contents = UIColor.purple
         thePaddle.position = SCNVector3(Int(PADDLE_POS_X), Int(PADDLE_POS_Y), 0)
         rootNode.addChildNode(thePaddle)
         
@@ -332,8 +332,15 @@ class ArkanoidGame: SCNScene {
     @MainActor
     // Function to be called by drag gesture
     func handleDrag(_ translation: CGFloat) {
-        // Move the paddle using the drag gesture
-        thePaddle.position.x += Float(translation / 75)
+            // Calculate new position
+            let newPosition = thePaddle.position.x + Float(translation / 75)
+
+            // Clamp the position within bounds
+        let clampedPosition = max(Float(-screenWidth), min(Float(screenWidth), newPosition))
+
+            // Apply the clamped position
+            thePaddle.position.x = clampedPosition
     }
     
 }
+
