@@ -11,6 +11,10 @@
 #include <stdio.h>
 #include <map>
 #include <string>
+#include <iostream>
+//#import <UIKit/UIKit.h>
+
+using namespace std;
 
 
 // Some Box2D engine paremeters
@@ -173,6 +177,8 @@ public:
         rightWallShape.SetAsBox(wallThickness, wallLength);
         rightWall->CreateFixture(&rightWallShape, 0.0f);
         
+
+        
         
         // Add multiple bricks in a grid
         for (int row = 0; row < BRICK_ROWS; row++) {
@@ -187,8 +193,24 @@ public:
                 snprintf(objName, sizeof(objName), "Brick_%d_%d", row, col); // Unique brick name
                 
                 [self AddObject:objName newObject:newObj];
+                
+
             }
         }
+        
+        for (int row = 0; row < 1; row++) {
+         
+                
+                struct PhysicsObject *newObj = new struct PhysicsObject;
+                newObj->loc.x = PADDLE_POS_X;
+                newObj->loc.y = PADDLE_POS_Y;
+                newObj->objType = ObjTypeBox;
+                char *objName = strdup("Paddle");
+                [self AddObject:objName newObject:newObj];
+
+            
+        }
+        
         
         struct PhysicsObject *newObj = new struct PhysicsObject;
         
@@ -202,6 +224,7 @@ public:
         totalElapsedTime = 0;
         ballHitBrick = false;
         ballLaunched = false;
+    
 
     }
     
@@ -356,6 +379,21 @@ public:
     ballBody->SetActive(true);
 }
 
+// Method to move the paddle
+- (void)MovePaddle:(float)xPos yPos:(float)yPos
+{
+    // Get the paddle object from physicsObjects map
+    struct PhysicsObject *thePaddle = physicsObjects[std::string("Paddle")];
+    
+    // Ensure the paddle exists and is valid
+    if (thePaddle && thePaddle->b2ShapePtr) {
+        b2Body *paddleBody = (b2Body *)thePaddle->b2ShapePtr;
+        
+        // Set the paddle's new position (this will move the paddle)
+        paddleBody->SetTransform(b2Vec2(xPos, yPos), paddleBody->GetAngle());
+    }
+}
+
 -(void) AddObject:(char *)name newObject:(struct PhysicsObject *)newObj
 {
     
@@ -363,24 +401,15 @@ public:
     b2BodyDef bodyDef;
     b2Body *theObject;
     
-    
-
-    bodyDef.position.Set(newObj->loc.x, newObj->loc.y);
-    theObject = world->CreateBody(&bodyDef);
-    if (!theObject) return;
-        
     // Make the brick static
     if (strncmp(name, "Brick", 5) == 0) {  // Check if it's any brick
         bodyDef.type = b2_staticBody; // Set all bricks as static
-    } else {
-        bodyDef.type = b2_dynamicBody;
+    } else if (strncmp(name, "Paddle", 6) == 0){ // Check if it's the paddle
+        bodyDef.type = b2_kinematicBody; //set paddle to kinematic
+    }else{
+        bodyDef.type = b2_dynamicBody; //ball is dynamic
     }
 
-
-    bodyDef.position.Set(newObj->loc.x, newObj->loc.y);
-    theObject = world->CreateBody(&bodyDef);
-    
-    
     bodyDef.position.Set(newObj->loc.x, newObj->loc.y);
     theObject = world->CreateBody(&bodyDef);
     if (!theObject) return;
@@ -396,18 +425,33 @@ public:
     // Based on the objType passed in, create a box or circle
     b2PolygonShape dynamicBox;
     b2CircleShape circle;
+    b2PolygonShape dynamicPaddle;
     b2FixtureDef fixtureDef;
+    
     
     switch (newObj->objType) {
             
         case ObjTypeBox:
-            
-            dynamicBox.SetAsBox(BRICK_WIDTH/2, BRICK_HEIGHT/2);
-            fixtureDef.shape = &dynamicBox;
-            fixtureDef.density = 1.0f;
-            fixtureDef.friction = 0.3f;
-            fixtureDef.restitution = 1.0f;
-            
+            // Check if it's the paddle (assuming the paddle name contains "Paddle")
+            if (strncmp(name, "Paddle", 6) == 0) {
+                cout<<"paddle";
+                // For the paddle, we want it to have the shape of a brick but be dynamic
+                dynamicBox.SetAsBox(PADDLE_WIDTH / 2, PADDLE_HEIGHT / 2);
+                fixtureDef.shape = &dynamicBox;
+                fixtureDef.density = 2.0f;
+                fixtureDef.friction = 0.3f;
+                fixtureDef.restitution = 0.5f;  // Lower restitution for paddle for realistic bounce
+                
+            } else {
+                
+                cout<<"box";
+                // For other box-shaped objects (bricks)
+                dynamicBox.SetAsBox(BRICK_WIDTH / 2, BRICK_HEIGHT / 2);
+                fixtureDef.shape = &dynamicBox;
+                fixtureDef.density = 1.0f;
+                fixtureDef.friction = 0.3f;
+                fixtureDef.restitution = 1.0f;  // Higher restitution for bricks
+            }
             break;
             
         case ObjTypeCircle:
@@ -420,6 +464,7 @@ public:
             theObject->SetGravityScale(0.0f);
             
             break;
+            
             
         default:
             
@@ -461,6 +506,8 @@ public:
 - (void *)GetPhysicsObjects {
     return (void *)&physicsObjects;
 }
-    
+
+
+
 
 @end

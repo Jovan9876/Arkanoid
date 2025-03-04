@@ -32,12 +32,12 @@
 #define WALL_LENGTH           100.0f
 #define PADDLE_POS_X           0
 #define PADDLE_POS_Y           11
-#define PADDLE_WIDTH           10.0f
+#define PADDLE_WIDTH           30.0f
 #define PADDLE_HEIGHT          3.0f
 
 
 // You can define other object types here
-typedef enum { ObjTypeBox=0, ObjTypeCircle=1 } ObjectType;
+typedef enum { ObjTypeBox=0, ObjTypeCircle=1, ObjTypePaddle=2} ObjectType;
 
 // Location of each object in our physics world
 struct PhysicsLocation {
@@ -63,7 +63,8 @@ struct PhysicsObject {
 
 //-(void) SetScreenSize:(float)width height:(float)height;
 
--(void) LaunchBall;                                                         // launch the ball
+-(void) LaunchBall;// launch the ball
+-(void) MovePaddle:(float)xPos yPos:(float)yPos;
 -(void) Update:(float)elapsedTime;                                          // update the Box2D engine
 - (void)RegisterHit:(const char *)brickName;                                // Register when the ball hits the brick pass in the name of the hit brick
 

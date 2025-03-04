@@ -332,6 +332,7 @@ class ArkanoidGame: SCNScene {
     @MainActor
     func handleDrag(_ translation: CGFloat) {
         
+       
         // Calculate new position
         let newPosition = thePaddle.position.x + Float(translation / 75)
         
@@ -347,6 +348,9 @@ class ArkanoidGame: SCNScene {
         
         // Set  paddle's x pos
         thePaddle.position.x = clampedX
+        
+        box2D.movePaddle(clampedX, yPos: 11.0)
+        
         
     }
 }
