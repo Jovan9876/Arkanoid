@@ -113,15 +113,13 @@ public:
 
     // Logit for this particular "game"
     bool ballHitBrick;  // register that the ball hit the break
-    bool ballLaunched;  // register that the user has launched the ball
+    bool ballLaunched; // register that the user has launched the ball
     
 }
+
 @end
 
 @implementation CBox2D
-
-
-
 
 
 - (instancetype)init:(float)width screenHeight:(float)height
@@ -352,32 +350,55 @@ public:
     bricksToDestroy.push_back(brick);
 }
 
+- (BOOL)isBallLaunched
+{
+    // Get the ball physics object from the map
+    struct PhysicsObject *theBall = physicsObjects["Ball"];
+    
+    // Ensure the ball exists and has a valid body
+    if (!theBall || !theBall->b2ShapePtr) {
+        return NO;  // Return NO if the ball doesn't exist or isn't valid
+    }
+
+    // Get the Box2D body associated with the ball
+    b2Body *ballBody = (b2Body *)theBall->b2ShapePtr;
+    
+    // Check if the ball's linear velocity is non-zero to determine if it has been launched
+    if (ballBody->GetLinearVelocity().Length() > 0) {
+        return YES;  // Ball has been launched (velocity is non-zero)
+    }
+    
+    return NO;  // Ball has not been launched (velocity is zero)
+}
 
 
 -(void)LaunchBall
 {
-    // Set some flag here for processing later...
-    ballLaunched = true;
-    // Get the ball object
-    struct PhysicsObject *theBall = physicsObjects["Ball"];
-    if (!theBall || !theBall->b2ShapePtr) return; // Ensure the ball exists
+    //check if the ball has been launched using the new helper function
+    if (![self isBallLaunched]) {
+        //if ball has not been launched, proceed to launch it
 
-    b2Body *ballBody = (b2Body *)theBall->b2ShapePtr;
+        struct PhysicsObject *theBall = physicsObjects["Ball"];
+        if (!theBall || !theBall->b2ShapePtr) return;  //ensure the ball exists and is valid
 
-    // Reset velocity
-    ballBody->SetLinearVelocity(b2Vec2(0, 0));
-    ballBody->SetAngularVelocity(0);
+        b2Body *ballBody = (b2Body *)theBall->b2ShapePtr;
 
-    // Apply **diagonal** force (both upward and sideways)
-    float launchSpeedX = BALL_VELOCITY * 0.7f;  // 70% power on X-axis
-    float launchSpeedY = BALL_VELOCITY * 0.7f;  // 70% power on Y-axis
+        //reset velocity
+        ballBody->SetLinearVelocity(b2Vec2(0, 0));
+        ballBody->SetAngularVelocity(0);
 
-    ballBody->ApplyLinearImpulse(b2Vec2(launchSpeedX, launchSpeedY),
-                                 ballBody->GetWorldCenter(),
-                                 true);
+        //apply **diagonal** force (both upward and sideways)
+        float launchSpeedX = BALL_VELOCITY * 0.7f;  // 70% power on X-axis
+        float launchSpeedY = BALL_VELOCITY * 0.7f;  // 70% power on Y-axis
 
-    ballBody->SetActive(true);
+        ballBody->ApplyLinearImpulse(b2Vec2(launchSpeedX, launchSpeedY),
+                                     ballBody->GetWorldCenter(),
+                                     true);
+
+        ballBody->SetActive(true);  //make the ball active
+    }
 }
+
 
 // Method to move the paddle
 - (void)MovePaddle:(float)xPos yPos:(float)yPos

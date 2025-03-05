@@ -289,17 +289,13 @@ class ArkanoidGame: SCNScene {
     // Function to be called by double-tap gesture: launch the ball
     @MainActor
     func handleDoubleTap() {
-        
-        box2D.launchBall()
-        
+            box2D.launchBall()
     }
     
     // Function to reset the physics (reset Box2D and reset the brick)
     @MainActor
     func resetPhysics() {
-        
         box2D.reset()
-        
     }
     
     @MainActor
