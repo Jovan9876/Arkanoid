@@ -154,6 +154,14 @@ public:
         topWallShape.SetAsBox(wallLength, wallThickness);
         topWall->CreateFixture(&topWallShape, 0.0f);
         
+        // Create a fixture definition for the right wall
+        b2FixtureDef topWallFixtureDef;
+        topWallFixtureDef.shape = &topWallShape;
+        topWallFixtureDef.friction = 0.0f; // Set friction to zero
+        topWallFixtureDef.restitution = 0.5f; // Optional: Set restitution (bounciness) if needed
+
+        // Attach the fixture to the body
+        topWall->CreateFixture(&topWallFixtureDef);
         
         // LEFT WALL - Consistent with SceneKit
         b2BodyDef leftWallDef;
@@ -165,18 +173,35 @@ public:
         leftWallShape.SetAsBox(wallThickness, wallLength);
         leftWall->CreateFixture(&leftWallShape, 0.0f);
         
-        // RIGHT WALL - Consistent with SceneKit
+        // Create a fixture definition for the right wall
+        b2FixtureDef leftWallFixtureDef;
+        leftWallFixtureDef.shape = &leftWallShape;
+        leftWallFixtureDef.friction = 0.0f; // Set friction to zero
+        leftWallFixtureDef.restitution = 0.5f; // Optional: Set restitution (bounciness) if needed
+
+        // Attach the fixture to the body
+        leftWall->CreateFixture(&leftWallFixtureDef);
+
+        
+        // Define the right wall body
         b2BodyDef rightWallDef;
         rightWallDef.type = b2_staticBody; // Assign static
         rightWallDef.position.Set(screenWidth, 0);
         b2Body* rightWall = world->CreateBody(&rightWallDef);
-        
+
+        // Define the shape of the right wall
         b2PolygonShape rightWallShape;
         rightWallShape.SetAsBox(wallThickness, wallLength);
-        rightWall->CreateFixture(&rightWallShape, 0.0f);
-        
 
-        
+        // Create a fixture definition for the right wall
+        b2FixtureDef rightWallFixtureDef;
+        rightWallFixtureDef.shape = &rightWallShape;
+        rightWallFixtureDef.friction = 0.0f; // Set friction to zero
+        rightWallFixtureDef.restitution = 0.5f; // Optional: Set restitution (bounciness) if needed
+
+        // Attach the fixture to the body
+        rightWall->CreateFixture(&rightWallFixtureDef);
+
         
         // Add multiple bricks in a grid
         for (int row = 0; row < BRICK_ROWS; row++) {
@@ -197,8 +222,7 @@ public:
         }
         
         for (int row = 0; row < 1; row++) {
-         
-                
+                         
                 struct PhysicsObject *newObj = new struct PhysicsObject;
                 newObj->loc.x = PADDLE_POS_X;
                 newObj->loc.y = PADDLE_POS_Y;
@@ -257,7 +281,18 @@ public:
                                                             ((b2Body *)theBall->b2ShapePtr)->GetPosition(),
                                                             true);
         ((b2Body *)theBall->b2ShapePtr)->SetActive(true);
+        if (theBall && theBall->b2ShapePtr) {
+                b2Body *ballBody = (b2Body *)theBall->b2ShapePtr;
+
+                // Define the constant force to apply (you can adjust these values)
+                b2Vec2 constantForce(BALL_VELOCITY * 7.0f, BALL_VELOCITY * 7.0f); // Apply a small force to the ball every frame
+                
+                // Apply the constant force to the ball's center
+                ballBody->ApplyForceToCenter(constantForce, true);
+            }
         ballLaunched = false;
+        
+        
     }
     
     // Check if it is time yet to drop the brick, and if so call SetAwake()
@@ -266,16 +301,16 @@ public:
         ((b2Body *)theBrick->b2ShapePtr)->SetAwake(true);
     }
     
-    // Use these lines for debugging the brick and ball positions
-    //    if (theBrick)
-    //        printf("Brick: %4.2f %4.2f\t",
-    //               ((b2Body *)theBrick->b2ShapePtr)->GetPosition().x,
-    //               ((b2Body *)theBrick->b2ShapePtr)->GetPosition().y);
-    //    if (theBall &&  theBall->b2ShapePtr)
-    //        printf("Ball: %4.2f %4.2f",
-    //               ((b2Body *)theBall->b2ShapePtr)->GetPosition().x,
-    //               ((b2Body *)theBall->b2ShapePtr)->GetPosition().y);
-    //    printf("\n");
+     //Use these lines for debugging the brick and ball positions
+        if (theBrick)
+            printf("Brick: %4.2f %4.2f\t",
+                   ((b2Body *)theBrick->b2ShapePtr)->GetPosition().x,
+                   ((b2Body *)theBrick->b2ShapePtr)->GetPosition().y);
+        if (theBall &&  theBall->b2ShapePtr)
+            printf("Ball: %4.2f %4.2f",
+                   ((b2Body *)theBall->b2ShapePtr)->GetPosition().x,
+                   ((b2Body *)theBall->b2ShapePtr)->GetPosition().y);
+        printf("\n");
     
     
     
@@ -290,9 +325,9 @@ public:
             ((b2Body *)theBall->b2ShapePtr)->SetAngularVelocity(0);
             ((b2Body *)theBall->b2ShapePtr)->SetAwake(false);
             ((b2Body *)theBall->b2ShapePtr)->SetActive(false);
+            
         }
 
-  
         // Find which brick was hit and remove only that one
         for (auto it = physicsObjects.begin(); it != physicsObjects.end(); ++it) {
             if (it->second && it->second->b2ShapePtr) {
@@ -302,8 +337,6 @@ public:
                 break; // Remove only the first brick hit
             }
         }
-
-        
     }
     
     if (world)
@@ -332,7 +365,7 @@ public:
         }
     }
     bricksToDestroy.clear();  // Clear the pending list
-
+    
     
     // Update each node based on the new position from Box2D
     for (auto const &b:physicsObjects) {
@@ -460,7 +493,7 @@ public:
                 dynamicBox.SetAsBox(PADDLE_WIDTH / 2, PADDLE_HEIGHT / 2);
                 fixtureDef.shape = &dynamicBox;
                 fixtureDef.density = 2.0f;
-                fixtureDef.friction = 0.3f;
+                fixtureDef.friction = 0.0f;
                 fixtureDef.restitution = 0.5f;  // Lower restitution for paddle for realistic bounce
                 
             } else {
@@ -470,8 +503,8 @@ public:
                 dynamicBox.SetAsBox(BRICK_WIDTH / 2, BRICK_HEIGHT / 2);
                 fixtureDef.shape = &dynamicBox;
                 fixtureDef.density = 1.0f;
-                fixtureDef.friction = 0.3f;
-                fixtureDef.restitution = 1.0f;  // Higher restitution for bricks
+                fixtureDef.friction = 0.0f;
+                fixtureDef.restitution = 0.5f;  // Higher restitution for bricks
             }
             break;
             

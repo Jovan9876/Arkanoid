@@ -29,7 +29,7 @@
 #define BALL_RADIUS           2.0f
 #define BALL_VELOCITY         1000.0f
 #define WALL_THICKNESS        1.0f
-#define WALL_LENGTH           100.0f
+#define WALL_LENGTH           1000.0f
 #define PADDLE_POS_X           0
 #define PADDLE_POS_Y           11
 #define PADDLE_WIDTH           30.0f
